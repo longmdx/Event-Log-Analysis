@@ -277,12 +277,12 @@ foreach( $Item in $LogNames) {
 			if ($event_tmp -eq $false) {
 				
 
-				$RDP_DFIR = Get-WinEvent -Path $Item | Where-Object {$_.Id -in $EventsParse}
+				$RDP_DFIR = Get-WinEvent -Path $Item -ErrorAction SilentlyContinue | Where-Object {$_.Id -in $EventsParse}
 				$event_tmp = $true
 			}
 			else{
 
-				$RDP_DFIR += Get-WinEvent -Path $Item | Where-Object {$_.Id -in $EventsParse}
+				$RDP_DFIR += Get-WinEvent -Path $Item -ErrorAction SilentlyContinue | Where-Object {$_.Id -in $EventsParse}
 			}			
 		}
 		catch {
