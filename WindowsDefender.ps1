@@ -106,13 +106,12 @@ foreach( $Item in $LogNames) {
 			if ($event_tmp -eq $false) {
 				
 
-				$Defender_DFIR = Get-WinEvent -Path $Item | Where-Object {$_.Id -in $EventsParse}
-				
+				$Defender_DFIR = Get-WinEvent -Path $Item -ErrorAction SilentlyContinue | Where-Object {$_.Id -in $EventsParse}		
 				$event_tmp = $true
 			}
 			else{
 
-				$Defender_DFIR += Get-WinEvent -Path $Item | Where-Object {$_.Id -in $EventsParse}
+				$Defender_DFIR += Get-WinEvent -Path $Item -ErrorAction SilentlyContinue | Where-Object {$_.Id -in $EventsParse}
 
 			}			
 		}
