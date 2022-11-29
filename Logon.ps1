@@ -10,13 +10,13 @@ Write-Warning "Reading Event Logs ..."
 Write-Host
 
 
-$EventsParse = @(5156, 4624, 4625, 1149, 21, 25)
+$EventsParse = @(5156, 4624, 4625, 1149, 21, 25, 4648)
 
 $EDI_PassTheHash = @(4624, 4625)
 
 $EDI_RDP = @(5156, 4624, 4625, 1149, 21, 25)
 
-
+$CredentialAccess = @(4648)
 
 function Test-PrivateIP {
 
@@ -88,6 +88,77 @@ function Get-PassTheHashDetect {
 	}
 
 }
+
+function Get-CredentialDetection {
+
+	param(
+
+		[Parameter(Position = 1, Mandatory = $true)]
+		[string] 
+		$EventID,
+		[Parameter(Position = 2, Mandatory = $true)]
+		$Data
+	)
+	process {
+
+		$DetectionRule = $Description = $null
+		
+		$TargetUserName = ($Data | Where Name -eq TargetUserName).InnerText
+		$TargetDomainName = ($Data | Where Name -eq TargetDomainName).InnerText
+		$TargetServerName = ($Data | Where Name -eq TargetServerName).InnerText
+		$TargetInfo = ($Data | Where Name -eq TargetInfo).InnerText
+		$ProcessName = ($Data | Where Name -eq ProcessName).InnerText
+		
+		if( $TargetInfo.Contains("RPCSS/") ) {
+
+			$DetectionRule = "Lateral Movement - RPC over TCP/IP"
+			$Description = $TargetDomainName + "\" + $TargetUserName + " was attempted using explicit credentials to " + $TargetServerName
+		}
+		elseif ( $ProcessName.Contains("sc.exe") ) {
+
+			$DetectionRule = "Remote Service Interaction"
+			$Description = "Using sc.exe with explicit creds " + "(" + $TargetDomainName + "\" + $TargetUserName + ") to " + $TargetServerName
+		}
+
+		Return $DetectionRule, $Description
+
+	}
+
+}
+
+
+function Get-WebshellDetection {
+
+	param(
+
+		[Parameter(Position = 1, Mandatory = $true)]
+		[string] 
+		$EventID,
+		[Parameter(Position = 2, Mandatory = $true)]
+		$Data
+	)
+	process {
+
+		$DetectionRule = $Description = $null
+		
+		$TargetUserName = ($Data | Where Name -eq TargetUserName).InnerText
+		$TargetDomainName = ($Data | Where Name -eq TargetDomainName).InnerText
+		$TargetServerName = ($Data | Where Name -eq TargetServerName).InnerText
+		$TargetInfo = ($Data | Where Name -eq TargetInfo).InnerText
+		$ProcessName = ($Data | Where Name -eq ProcessName).InnerText
+		
+		if( $ProcessName.Contains("w3wp.exe") ) {
+
+			$DetectionRule = "Webshell CreateProcessAsUserA"
+			$Description = $TargetDomainName + "\" + $TargetUserName + " logon via " + $ProcessName
+		}
+
+		Return $DetectionRule, $Description
+
+	}
+
+}
+
 
 #https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/
 # https://www.13cubed.com/downloads/rdp_flowchart.pdf
@@ -277,12 +348,12 @@ foreach( $Item in $LogNames) {
 			if ($event_tmp -eq $false) {
 				
 
-				$RDP_DFIR = Get-WinEvent -Path $Item -ErrorAction SilentlyContinue | Where-Object {$_.Id -in $EventsParse}
+				$RDP_DFIR = Get-WinEvent -Path $Item | Where-Object {$_.Id -in $EventsParse}
 				$event_tmp = $true
 			}
 			else{
 
-				$RDP_DFIR += Get-WinEvent -Path $Item -ErrorAction SilentlyContinue | Where-Object {$_.Id -in $EventsParse}
+				$RDP_DFIR += Get-WinEvent -Path $Item | Where-Object {$_.Id -in $EventsParse}
 			}			
 		}
 		catch {
@@ -344,6 +415,20 @@ foreach ($Item in $RDP_DFIR) {
 
 	}
 
+	if( ($EventID -in $CredentialAccess) -And $DetectionRule -eq $null ) {
+
+		$returnedData  =  Get-CredentialDetection -EventID $EventID -Data $Data
+		$DetectionRule = $returnedData[0]
+		$Description = $returnedData[1]
+	}
+
+	if( ($EventID -eq 4624) -And $DetectionRule -eq $null ) {
+
+		$returnedData  =  Get-WebshellDetection -EventID $EventID -Data $Data
+		$DetectionRule = $returnedData[0]
+		$Description = $returnedData[1]
+	}
+
 	# update info process bar
 	$CurrentItem++
 	$PercentComplete = [int](($CurrentItem / $TotalItems) * 100)
@@ -374,8 +459,3 @@ foreach ($st in $Stores) {
 Write-Host
 Write-Warning "Done!"
 Write-Host
-
-
-
-
-
