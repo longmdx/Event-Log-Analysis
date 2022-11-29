@@ -6,7 +6,7 @@ if ($args.Count -ne 1) {
 
 # Path save parse
 $OutputFile = "C:\ProgramData\DFIR_VCS\Windows_Defender.csv"
-Remove-Item $OutputFile -ErrorAction SilentlyContinue
+#Remove-Item $OutputFile -ErrorAction SilentlyContinue
 
 
 Write-Warning "Reading Event Logs ..."
