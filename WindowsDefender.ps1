@@ -90,7 +90,6 @@ foreach( $Item in $LogNames) {
 
 	if( !$(Test-Path $Item) ) {
 
-		$LogNames.Remove($Item)
 		Write-Host -NoNewline "Warning|" -BackgroundColor Red
 		Write-Host (" " + $Item + " it does not exist.") -ForegroundColor Red -BackgroundColor Black
 		Write-Host
