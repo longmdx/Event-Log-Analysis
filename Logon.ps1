@@ -119,7 +119,9 @@ function Get-CredentialDetection {
 			$DetectionRule = "Remote Service Interaction"
 			$Description = "Using sc.exe with explicit creds " + "(" + $TargetDomainName + "\" + $TargetUserName + ") to " + $TargetServerName
 		}
+		elseif ( $ProcessName.Contains("sc.exe") ) {
 
+		}
 		Return $DetectionRule, $Description
 
 	}
@@ -333,12 +335,11 @@ foreach( $Item in $LogNames) {
 
 	if( !$(Test-Path $Item) ) {
 
-		$LogNames.Remove($Item)
 		Write-Host -NoNewline "Warning|" -BackgroundColor Red
 		Write-Host (" " + $Item + " it does not exist.") -ForegroundColor Red -BackgroundColor Black
 		Write-Host
 	}
-	elseif( $LogNames -ge 1 ){
+	else {
 
 		try {
 
@@ -366,10 +367,10 @@ foreach( $Item in $LogNames) {
 		}
 
 	}
-	else{
+	if($event_tmp -eq $false) {
 
 		Write-Host -NoNewline "Warning" -BackgroundColor Red
-		Write-Host (" Not found Alogs.") -ForegroundColor Red -BackgroundColor Black
+		Write-Host (" Not found events.") -ForegroundColor Red -BackgroundColor Black
 		Write-Host
 
 		Return $false
@@ -450,12 +451,13 @@ foreach ($Item in $RDP_DFIR) {
 	}
 }
 
-# collect to csv
-foreach ($st in $Stores) {
-
-	$st | sort TimeCreated -Descending | Select TimeCreated, ComputerName, DetectionRule, Description, EventId, OriginalLog | Export-Csv -Path $OutputFile -NoTypeInformation -Append
-}
+$Stores | sort TimeCreated -Descending | Select TimeCreated, ComputerName, DetectionRule, Description, EventId, OriginalLog | Export-Csv -Path $OutputFile -NoTypeInformation -Append
 
 Write-Host
 Write-Warning "Done!"
 Write-Host
+
+
+
+
+
