@@ -4,8 +4,8 @@ if ($args.Count -ne 1) {
 }
 
 #$OutputFile = "C:\ProgramData\DFIR_VCS\Account.csv"
-$OutputFile = "Account.csv"
-Clear-Content -Path $OutputFile
+$OutputFile = "C:\ProgramData\DFIR_VCS\Account.csv"
+#Clear-Content -Path $OutputFile
 #Remove-Item $OutputFile -ErrorAction SilentlyContinue
 
 function AccountDetect {
@@ -22,7 +22,7 @@ function AccountDetect {
 	process {
 
 		$DetectionRule = $Description = $null
-		
+
 		$TargetUserName = ($Data | where Name -eq "TargetUserName").InnerText
 		$TargetDomainName = ($Data | where Name -eq "TargetDomainName").InnerText
 		$SubjectUserName = ($Data | where Name -eq "SubjectUserName").InnerText
